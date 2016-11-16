@@ -1,4 +1,16 @@
-﻿# Building a Container Ecosystem
+﻿---
+title: Container Ecosystem
+description: Building a Container Ecosystem.
+keywords: metadata, containers
+author: PatrickLang
+ms.date: 04/20/2016
+ms.topic: about-article
+ms.prod: windows-containers
+ms.service: windows-containers
+ms.assetid: 29fbe13a-228a-4eaa-9d4d-90ae60da5965
+---
+
+# Building a Container Ecosystem
 
 To understand why building a container ecosystem is so important, let's first talk about Docker.
 
@@ -17,18 +29,14 @@ Now let's talk about that ecosystem of applications and how you can build on Doc
 
 ## Components in a container ecosystem
 
-Windows Server Containers are a key component of a large container ecosystem. We’re working across the industry to deliver developer choice at each layer of the solution stack.
+Windows Containers are a key component of a large container ecosystem. We’re working across the industry to deliver developer choice at each layer of the solution stack.
 
 The container ecosystem provides ways to manage containers, share containers and develop apps that run in containers.
 
 ![](media/containerEcosystem.png)
-
 
 Microsoft wants to empower developer choice and productivity as they build these next-gen apps.  Our goal is to fuel developer productivity which means enabling applications to target any Microsoft cloud without having to modify, rewrite, or reconfigure code.
 
 Microsoft is committed to being open and ecosystem friendly.  We actively support the coming together of multiple developer ecosystems of interest – such as Windows and Linux – to drive innovation.
 
 Over the coming months, we will be providing more information about additional partners in this developing ecosystem.
-
--------------------
-[Back to Container Home](../containers_welcome.md)

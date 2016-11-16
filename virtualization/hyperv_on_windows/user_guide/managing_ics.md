@@ -1,8 +1,22 @@
+---
+title: Managing Hyper-V Integration Services
+description: Managing Hyper-V Integration Services
+keywords: windows 10, hyper-v, integration services, integration components
+author: scooley
+ms.date: 05/02/2016
+ms.topic: article
+ms.prod: windows-10-hyperv
+ms.service: windows-10-hyperv
+ms.assetid: 9cafd6cb-dbbe-4b91-b26c-dee1c18fd8c2
+---
+
 # Managing Hyper-V Integration Services
 
-Integration services (often called integration components), are services that allow the virtual machine to communicate with the Hyper-V host. Many of these services are conveniences (such as guest file copy), while others can be quite important to the guest operating system's ability to function correctly (time synchronization).
+Integration services (often called integration components), are services that allow the virtual machine to communicate with the Hyper-V host. Many of these services are conveniences (such as guest file copy), while others can be quite important to the virtual machine's ability to function correctly (time synchronization).
 
-This article will detail how to manage integration services using both Hyper-V manager and PowerShell in Windows 10. For more information on each individual integration service, see [Integration Services]( https://technet.microsoft.com/en-us/library/dn798297.aspx) .
+This article will detail how to manage integration services using both Hyper-V manager and PowerShell in Windows 10.  
+
+For more information on each individual integration service, see [Integration Services](../reference/ic_info.md).
 
 ## Enable or Disable Integration Services using Hyper-V Manager
 
@@ -13,7 +27,9 @@ This article will detail how to manage integration services using both Hyper-V m
   
   ![](./media/HyperVManager-IntegrationServices.png)
   
-  Here you can see all integration services available on this Hyper-V host.  It's worth noting that the guest operating system may or may not support all of the integration services listed.
+  Here you can see all integration services available on this Hyper-V host.  It's worth noting that the guest operating system may or may not support all of the integration services listed. To determine the version information for a guest operating system, log on to the guest operating system and run the following command from command prompt.
+
+REG QUERY "HKLM\Software\Microsoft\Virtual Machine\Auto" /v IntegrationServicesVersion
 
 ## Enable or Disable Integration Services Using PowerShell
 
@@ -24,33 +40,33 @@ In this example, we'll enable and then disable the guest file copy integration s
 1. See what integration services are running
   
   ``` PowerShell
-  Get-VMIntegrationService -VMName "demovm"
+  Get-VMIntegrationService -VMName "DemoVM"
   ```
 
   The output will look like this:  
   ``` PowerShell
   VMName      Name                    Enabled PrimaryStatusDescription SecondaryStatusDescription
   ------      ----                    ------- ------------------------ --------------------------
-  demovm      Guest Service Interface False   OK
-  demovm      Heartbeat               True    OK                       OK
-  demovm      Key-Value Pair Exchange True    OK
-  demovm      Shutdown                True    OK
-  demovm      Time Synchronization    True    OK
-  demovm      VSS                     True    OK
+  DemoVM      Guest Service Interface False   OK
+  DemoVM      Heartbeat               True    OK                       OK
+  DemoVM      Key-Value Pair Exchange True    OK
+  DemoVM      Shutdown                True    OK
+  DemoVM      Time Synchronization    True    OK
+  DemoVM      VSS                     True    OK
   ```
 
 2. Enable the `Guest Service Interface` integration service
 
    ``` PowerShell
-   Enable-VMIntegrationService -VMName "demovm" -Name "Guest Service Interface"
+   Enable-VMIntegrationService -VMName "DemoVM" -Name "Guest Service Interface"
    ```
    
-   If you run `Get-VMIntegrationService -VMName "demovm"` you will see that the Guest Service Interface integration service is enabled.
+   If you run `Get-VMIntegrationService -VMName "DemoVM"` you will see that the Guest Service Interface integration service is enabled.
  
 3. Disable the `Guest Service Interface` integration service
 
    ``` PowerShell
-   Disable-VMIntegrationService -VMName "demovm" -Name "Guest Service Interface"
+   Disable-VMIntegrationService -VMName "DemoVM" -Name "Guest Service Interface"
    ```
    
 Integration services were designed such that they need to be enabled in both the host and the guest in order to function.  While all integration services are enabled by default on Windows guest operating systems, they can be disabled.  See how in the next section.
@@ -87,7 +103,9 @@ Stopped  vmicvmsession      Hyper-V VM Session Service
 Running  vmicvss            Hyper-V Volume Shadow Copy Requestor
 ```
 
-Start or stop services using [`Start-Service`](https://technet.microsoft.com/en-us/library/hh849825.aspx) or [`Stop-Service`](https://technet.microsoft.com/en-us/library/hh849790.aspx) .
+Start or stop services using [`Start-Service`](https://technet.microsoft.com/en-us/library/hh849825.aspx) or [`Stop-Service`](https://technet.microsoft.com/en-us/library/hh849790.aspx).
+
+For example, to disable PowerShell Direct you can run `Stop-Service -Name vmicvmsession`.
 
 By default, all integration services are enabled in the guest operation system.
 
@@ -172,29 +190,35 @@ sudo hv_kvp_daemon
 Now if you run `ps -ef | hv` again, you'll discover a `hv_kvp_daemon` process with a new process ID.
 
 
-## Integration service maintainance
+## Integration service maintenance
 
-Keep integration services current in order to receive the best virtual machine performance and features possible.
+Integration service maintainance in Windows 10 happens by default so long as your virtual machines can recieve important updates from Windows Update.  
+
+Keeping integration services current provides the best virtual machine performance and features possible.
 
 **For virtual machines running on Windows 10 hosts:**
+
+> **Note:** The ISO image file vmguest.iso is no longer needed for updating integration components. It's not included with Hyper-V on Windows 10.
 
 | Guest OS | Update mechanism | Notes |
 |:---------|:---------|:---------|
 | Windows 10 | Windows Update | |
 | Windows 8.1 | Windows Update | |
-| Windows 8 | Windows Update | Requires the Data Exchange integration service.***** |
-| Windows 7 | Windows Update | Requires the Data Exchange integration service.***** |
-| Windows Vista (SP 2) | Windows Update | Requires the Data Exchange integration service.***** |
+| Windows 8 | Windows Update | Requires the Data Exchange integration service.* |
+| Windows 7 | Windows Update | Requires the Data Exchange integration service.* |
+| Windows Vista (SP 2) | Windows Update | Requires the Data Exchange integration service.* |
 | - | | |
 | Windows Server 2012 R2 | Windows Update | |
-| Windows Server 2012 | Windows Update | Requires the Data Exchange integration service.***** |
-| Windows Server 2008 R2 | Windows Update | Requires the Data Exchange integration service.***** |
-| Windows Server 2008 (SP 2) | Windows Update | Requires the Data Exchange integration service.***** |
-| Windows Home Server 2011 | Windows Update | Requires the Data Exchange integration service.***** |
-| Windows Small Business Server 2011 | Windows Update | Requires the Data Exchange integration service.***** |
+| Windows Server 2012 | Windows Update | Requires the Data Exchange integration service.* |
+| Windows Server 2008 R2 (SP 1) | Windows Update | Requires the Data Exchange integration service.* |
+| Windows Server 2008 (SP 2) | Windows Update | Extended support only in Server 2016 ([read more](https://support.microsoft.com/en-us/lifecycle?p1=12925)). |
+| Windows Home Server 2011 | Windows Update | Will not be supported in Server 2016 ([read more](https://support.microsoft.com/en-us/lifecycle?p1=15820)). |
+| Windows Small Business Server 2011 | Windows Update | Not under mainstream support ([read more](https://support.microsoft.com/en-us/lifecycle?p1=15817)). |
+| - | | |
+| Linux guests | package manager | Integration components for Linux are built into the distro but there may be optional updates available. ******** |
 
-
-**\*** If the Data Exchange integration service can not be enabled, the integration components for these guests are available [here](https://support.microsoft.com/en-us/kb/3071740) as a cabinet (cab) file on the download center.  Instructions for applying a cab are availabe [here](http://blogs.technet.com/b/virtualization/archive/2015/07/24/integration-components-available-for-virtual-machines-not-connected-to-windows-update.aspx).
+>  \* If the Data Exchange integration service can not be enabled, the integration components for these guests are available [here](https://support.microsoft.com/en-us/kb/3071740) as a cabinet (cab) file on the download center.  
+  Instructions for applying a cab are available  [here](http://blogs.technet.com/b/virtualization/archive/2015/07/24/integration-components-available-for-virtual-machines-not-connected-to-windows-update.aspx).
 
 
 **For virtual machines running on Windows 8.1 hosts:**
@@ -203,39 +227,42 @@ Keep integration services current in order to receive the best virtual machine p
 |:---------|:---------|:---------|
 | Windows 10 | Windows Update | |
 | Windows 8.1 | Windows Update | |
-| Windows 8 | Integration Services disk | |
-| Windows 7 | Integration Services disk | |
-| Windows Vista (SP 2) | Integration Services disk | |
-| Windows XP (SP 2, SP 3) | Integration Services disk | |
+| Windows 8 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows 7 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Vista (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows XP (SP 2, SP 3) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
 | - | | |
 | Windows Server 2012 R2 | Windows Update | |
-| Windows Server 2012 | Integration Services disk | |
-| Windows Server 2008 R2 | Integration Services disk | |
-| Windows Server 2008 (SP 2) | Integration Services disk | |
-| Windows Home Server 2011 | Integration Services disk | |
-| Windows Small Business Server 2011 | Integration Services disk | |
-| Windows Server 2003 R2 (SP 2) | Integration Services disk | |
-| Windows Server 2003 (SP 2) | Integration Services disk | |
+| Windows Server 2012 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Server 2008 R2 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Server 2008 (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Home Server 2011 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Small Business Server 2011 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Server 2003 R2 (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Server 2003 (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| - | | |
+| Linux guests | package manager | Integration components for Linux are built into the distro but there may be optional updates available. ** |
+
 
 **For virtual machines running on Windows 8 hosts:**
 
 | Guest OS | Update mechanism | Notes |
 |:---------|:---------|:---------|
 | Windows 8.1 | Windows Update | |
-| Windows 8 | Integration Services disk | |
-| Windows 7 | Integration Services disk | |
-| Windows Vista (SP 2) | Integration Services disk | |
-| Windows XP (SP 2, SP 3) | Integration Services disk | |
+| Windows 8 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows 7 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Vista (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows XP (SP 2, SP 3) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
 | - | | |
 | Windows Server 2012 R2 | Windows Update | |
-| Windows Server 2012 | Integration Services disk | |
-| Windows Server 2008 R2 | Integration Services disk | |
-| Windows Server 2008 (SP 2) | Integration Services disk | |
-| Windows Home Server 2011 | Integration Services disk | |
-| Windows Small Business Server 2011 | Integration Services disk | |
-| Windows Server 2003 R2 (SP 2) | Integration Services disk | |
-| Windows Server 2003 (SP 2) | Integration Services disk | |
+| Windows Server 2012 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Server 2008 R2 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4).|
+| Windows Server 2008 (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Home Server 2011 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Small Business Server 2011 | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Server 2003 R2 (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| Windows Server 2003 (SP 2) | Integration Services disk | Instructions available  [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4). |
+| - | | |
+| Linux guests | package manager | Integration components for Linux are built into the distro but there may be optional updates available. ** |
 
-Instructions for updating via Integration Services disk for Windows 8 and Windows 8.1 are avialable [here](https://technet.microsoft.com/en-us/library/hh846766.aspx#BKMK_step4).
-
-**\*\*** Find even more information about Linux Guests [here](https://technet.microsoft.com/en-us/library/dn531030.aspx). 
+ > ** Find more information about Linux Guests [here](https://technet.microsoft.com/en-us/library/dn531030.aspx). 

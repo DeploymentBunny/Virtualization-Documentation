@@ -1,8 +1,22 @@
+---
+title: About Windows Containers
+description: Learn about Windows containers.
+keywords: docker, containers
+author: taylorb-microsoft
+ms.date: 05/02/2016
+ms.topic: article
+ms.prod: windows-containers
+ms.service: windows-containers
+ms.assetid: 8e273856-3620-4e58-9d1a-d1e06550448
+---
+
 # Windows Containers
+
+**This is preliminary content and subject to change.** 
 
 Applications fuel innovation in the cloud and mobile era. Containers, and the ecosystem that is developing around them, will empower software developers to create the next generation of applications experiences.
 
-Watch a short overview: [Windows-based containers: Modern app development with enterprise-grade control](https://youtu.be/Ryx3o0rD5lY ).
+Watch a short overview: [Windows-based containers: Modern app development with enterprise-grade control](https://youtu.be/Ryx3o0rD5lY).
 
 ## What are Containers
 
@@ -12,7 +26,7 @@ Basically, a container is an isolated place where an application can run without
 
 If you were inside a container, it would look very much like you were inside a freshly installed physical computer or a virtual machine. And, to [Docker](https://www.docker.com/), a Windows Server Container can be managed in the same way as any other container.
 
-## Windows Containers
+## Windows Container Types
 
 Windows Containers include two different container types, or runtimes.
 
@@ -27,9 +41,9 @@ When you begin working with containers you will notice many similarities between
 
 [This blog post](http://azure.microsoft.com/blog/2015/08/17/containers-docker-windows-and-trends/) by Mark Russinovich explains containers well.
 
-The following key concepts will be helpful as you begin creating and working with Windows Server Containers. 
+The following key concepts will be helpful as you begin creating and working with Windows Containers. 
 
-**Container Host:** Physical or Virtual computer system configured with the Windows Server Container feature. The container host will run one or more Windows Server Containers.
+**Container Host:** Physical or Virtual computer system configured with the Windows Container feature. The container host will run one or more Windows Containers.
 
 **Container Image:** As modifications are made to a containers file system or registry, such as with software installation they are captured in a sandbox.  In many cases you may want to capture this state such that new containers can be created that inherit these changes. That’s what an image is – once the container has stopped you can either discard that sandbox or you can convert it into a new container image. For example, let’s imagine that you have deployed a container from the Windows Server Core OS image. You then install MySQL into this container. Creating a new image from this container would act as a deployable version of the container. This image would only contain the changes made (MySQL), however would work as a layer on top of the Container OS Image.
 
@@ -38,8 +52,6 @@ The following key concepts will be helpful as you begin creating and working wit
 **Container OS Image:** Containers are deployed from images. The container OS image is the first layer in potentially many image layers that make up a container. This image provides the operating system environment. A Container OS Image is Immutable, it cannot be modified.
 
 **Container Repository:** Each time a container image is created the container image and its dependencies are stored in a local repository. These images can be reused many times on the container host. The container images can also be stored in a public or private registry  such as DockerHub so that they can be used across many different container host.
-
-**Container Management Technology:** Windows Server Containers can be managed using both PowerShell and Docker. With either one of these tools you can create new containers, container images as well as manage the container lifecycle.
 
 <center>![](media/containerfund.png)</center>
 
@@ -69,5 +81,5 @@ src="https://channel9.msdn.com/Blogs/containers/Containers-101-with-Microsoft-an
 
 ## Try Windows Server Containers
 
-[Get started with Windows Server Containers in Windows Azure](../quick_start/azure_setup.md)  
-[Get started with Windows Server Containers Locally](../quick_start/container_setup.md)
+[Container Quick Start Introduction](../quick_start/quick_start.md)
+

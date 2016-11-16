@@ -1,3 +1,15 @@
+---
+title: PowerShell Snippets
+description: PowerShell Snippets
+keywords: windows 10, hyper-v
+author: scooley
+ms.date: 05/02/2016
+ms.topic: article
+ms.prod: windows-10-hyperv
+ms.service: windows-10-hyperv
+ms.assetid: dc33c703-c5bc-434e-893b-0c0976b7cb88
+---
+
 # PowerShell Snippets
 
 PowerShell is an awesome scripting, automation, and management tool for Hyper-V.  Here is a toolbox for exploring some of the cool things it can do!
@@ -21,20 +33,14 @@ All of the scripts and snippets in this section will rely on the following basic
 
 Hyper-V Manager doesn't give you visibility into the guest operating system which often makes it difficult to know whether the guest OS has booted.
 
-Use this command to check whether the guest has booted.
+Here are two views of the same functionality, first as a code snippet then as a PowerShell function.
 
+Snippet:  
 ``` PowerShell
 if((Invoke-Command -VMName $VMName -Credential $cred {"Test"}) -ne "Test"){Write-Host "Not Booted"} else {Write-Host "Booted"}
 ```  
 
-**Outcome**  
-Prints a friendly message declaring the state of the guest OS.
-
-
-### Script locking until the guest has booted
-
-The following function waits uses the same principle to wait until PowerShell is available in the guest (meaning the OS has booted and most services are running) then returns.
-
+Function:  
 ``` PowerShell
 function waitForPSDirect([string]$VMName, $cred){
    Write-Output "[$($VMName)]:: Waiting for PowerShell Direct (using $($cred.username))"

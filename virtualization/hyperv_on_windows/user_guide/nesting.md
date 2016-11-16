@@ -1,88 +1,74 @@
-# Nested Virtualization
+---
+title: Nested Virtualization
+description: Nested Virtualization
+keywords: windows 10, hyper-v
+author: theodthompson
+ms.date: 06/20/2016
+ms.topic: article
+ms.prod: windows-10-hyperv
+ms.service: windows-10-hyperv
+ms.assetid: 68c65445-ce13-40c9-b516-57ded76c1b15
+---
 
-> **Note:** This early preview feature is only available to Windows Insiders, running Build 10565 or later, and comes with no performance or stability guarantees.
+# Run Hyper-V in a Virtual Machine with Nested Virtualization
 
-Nested virtualization is running virtualization inside a virtualized environment.  In other words, nesting allows you to run the Hyper-V server role inside a virtual machine.
+Nested virtualization is a feature that allows you to run Hyper-V inside of a Hyper-V virtual machine. In other words, with nested virtualization, a Hyper-V host itself can be virtualized. Some use cases for nested virtualization would be to run a Hyper-V Container in a virtualized container host, set-up a Hyper-V lab in a virtualized environment, or to test multi-machine scenarios without the need for individual hardware. This document will detail software and hardware prerequisites, configuration steps, and limitations. 
 
-![](./media/HyperVNesting.png)
+## Prerequisites
 
-Hyper-V relies on hardware virtualization support (e.g. Intel VT-x and AMD-V) to run virtual machines. Typically, once Hyper-V is installed, the hypervisor hides this capability from guest virtual machines.  This prevents guest virtual machines from running Hyper-V server role among other hypervisors.
+- A Hyper-V host running Windows Server 2016 or Windows 10 Anniversary Update.
+- A Hyper-V VM running Windows Server 2016 or Windows 10 Anniversary Update.
+- A Hyper-V VM with configuration version 8.0 or greater.
+- An Intel processor with VT-x and EPT technology.
 
-Nested virtualization exposes those hardware virtualization support components to guest virtual machine.
+## Configure Nested Virtualization
 
-The diagram below shows Hyper-V without nesting.  The Hyper-V hypervisor takes full control of the hardware virtualization extensions (orange arrow), and does not expose them to the guest operating system.
+1. Create a virtual machine. See the prerequisites above for the required OS and VM versions.
+2. While the virtual machine is in the OFF state, run the following command on the physical Hyper-V host. This enables nested virtualization for the virtual machine.
 
-![](./media/HVNoNesting.png)
+```none
+Set-VMProcessor -VMName <VMName> -ExposeVirtualizationExtensions $true
+```
+3. Start the virtual machine.
+4. Install Hyper-V within the virtual machine, just like you would for a physical server. For more information on installing Hyper-V see, [Install Hyper-V]( https://msdn.microsoft.com/en-us/virtualization/hyperv_on_windows/quick_start/walkthrough_install).
 
-In contrast, the diagram below shows Hyper-V with nesting. In this case, Hyper-V exposes the hardware virtualization extensions to its virtual machines. With nesting enabled, a guest virtual machine can install its own hypervisor and run its own guest VMs.
+## Disable Nested Virtualization
+You can disable nested virtualization for a stopped virtual machine using the following PowerShell command:
+```none
+Set-VMProcessor -VMName <VMName> -ExposeVirtualizationExtensions $false
+```
 
-![](./media/HVNesting.png)
+## Dynamic Memory and Runtime Memory Resize
+When Hyper-V is running inside a virtual machine, the virtual machine must be turned off to adjust its memory. This means that even if dynamic memory is enabled, the amount of memory will not fluctuate. For virtual machines without dynamic memory enabled, any attempt to adjust the amount of memory while it's on will fail. 
 
-## Nested Virtualization Requirements
-Before enabling nested virtualization, be aware this is a preview.  Do not use nesting in production environments.  
+Note that simply enabling nested virtualization will have no effect on dynamic memory or runtime memory resize. The incompatibility only occurs while Hyper-V is running in the VM.
 
-Requirements:
-* 4 GB RAM available minimum.  Nested virtualization requires a good amount of memory.
-* Both hypervisors need to be the latest Windows Insider build (10565 or greater).  Other hypervisors will not work.  
-* This feature is currently Intel-only. Intel VT-x is required.
+## Networking Options
+There are two options for networking with nested virtual machines: MAC address spoofing and NAT mode.
 
-## Enable Nested Virtualization
+### MAC Address Spoofing
+In order for network packets to be routed through two virtual switches, MAC address spoofing must be enabled on the first level of virtual switch. This is completed with the following PowerShell command.
 
-1. Create a virtual machine running the same build as your host -- [instructions here](../quick_start/walkthrough_create_vm.md).
+```none
+Get-VMNetworkAdapter -VMName <VMName> | Set-VMNetworkAdapter -MacAddressSpoofing On
+```
+### Network Address Translation
+The second option relies on network address translation (NAT). This approach is best suited for cases where MAC address spoofing is not possible, like in a public cloud environment.
 
-2. Run [this script](https://github.com/Microsoft/Virtualization-Documentation/blob/master/hyperv-tools/Nested/Enable-NestedVm.ps1) as administrator on the Hyper-V host.
-  
-  In this early preview, nesting comes with a few configuration requirements.  To make things easier, [this PowerShell script](https://github.com/Microsoft/Virtualization-Documentation/blob/master/hyperv-tools/Nested/Enable-NestedVm.ps1) script will check your configuration, change anything which is incorrect, and enable nested virtualization for the specified virtual machine.
-  
-  ``` PowerShell
-  Invoke-WebRequest https://raw.githubusercontent.com/Microsoft/Virtualization-Documentation/master/hyperv-tools/Nested/Enable-NestedVm.ps1 -OutFile ~/Enable-NestedVm.ps1 
-  ~/Enable-NestedVm.ps1 -VmName "DemoVM"
-  ```
+First, a virtual NAT switch must be created in the host virtual machine (the "middle" VM). Note that the IP addresses are just an example, and will vary across environments:
+```none
+new-vmswitch -name VmNAT -SwitchType Internal
+New-NetNat –Name LocalNAT –InternalIPInterfaceAddressPrefix “192.168.100.0/24”
+```
+Next, assign an IP address to the net adapter:
+```none
+get-netadapter "vEthernet (VmNat)" | New-NetIPAddress -IPAddress 192.168.100.1 -AddressFamily IPv4 -PrefixLength 24
+```
+Each nested virtual machine must have an IP address and gateway assigned to it. Note that the gateway IP must point to the NAT adapter from the previous step. You may also want to assign a DNS server:
+```none
+get-netadapter "Ethernet" | New-NetIPAddress -IPAddress 192.168.100.2 -DefaultGateway 192.168.100.1 -AddressFamily IPv4 -PrefixLength 24
+Netsh interface ip add dnsserver “Ethernet” address=<my DNS server>
+```
 
-3. Install Hyper-V in the virtual machine.
-
-  ``` PowerShell
-  Invoke-Command -VMName "DemoVM" -ScriptBlock { Enable-WindowsOptionalFeature -FeatureName Microsoft-Hyper-V -Online; Restart-Computer }
-  ```
-  
-4. Create nested virtual machines!
-
-## Known Issues
-
-Below is a list of known issues: 
-* Hosts with Device Guard enabled cannot expose virtualization extensions to guests.
-
-* Hosts with Virtualization Based Security (VBS) enabled cannot expose virtualization extensions to guests. You must first disable VBS in order to preview nested virtualization.
-
-* Once nested virtualization is enabled in a virtual machine, the following features are no longer compatible with that VM.  
-  These actions will either fail, or cause the virtual machine not to start if it is hosting other virtual machines:  
-  * Dynamic memory must be OFF. This will prevent the VM from booting.
-  * Runtime memory resize will fail.
-  * Applying checkpoints to a running VM will fail.
-  * Live migration will fail -- in other words, a VM which hosts other VMs cannot be live migrated.
-  * Save/restore will fail.
-  
-  > **Note:** these features still work in the “innermost” guest VM. The restrictions only apply to the first layer VM.
-
-* Once nested virtualization is enabled, MAC spoofing must be enabled in the virtual machine for networking to work in the "innermost" guests.
-
-## FAQ and Troubleshooting
-
-### My virtual machine won’t start, what should I do?
-1. Make sure dynamic memory is OFF.
-2. Run this PowerShell script on your host machine from an elevated prompt.
-  
-  This script reports whether your host and VMs are configured properly for nested.
-
-  ``` PowerShell
-  Invoke-WebRequest https://raw.githubusercontent.com/Microsoft/Virtualization-Documentation/master/hyperv-tools/Nested/Get-NestedVirtStatus.ps1 -OutFile ~/Get-NestedVirtStatus.ps1 
-  ~/Get-NestedVirtStatus.ps1
-  ```
-
-### Virtual Machine Connection keeps being lost.
-If you are using a blank password, this is a known issue.  Please change your password and the issue should be resolved.
-
-### My issue isn't here.
-Don't see your issue?  Have feedback?  Contact us.
-
-Report them through the Windows feedback app, the [virtualization forums](https://social.technet.microsoft.com/Forums/windowsserver/En-us/home?forum=winserverhyperv), or through [GitHub](https://github.com/Microsoft/Virtualization-Documentation).
+## 3rd Party Virtualization Apps
+Virtualization applications other than Hyper-V are not supported in Hyper-V virtual machines, and are likely to fail. This includes any software that requires hardware virtualization extensions.

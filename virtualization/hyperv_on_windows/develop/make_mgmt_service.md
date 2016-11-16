@@ -1,20 +1,33 @@
-# Make a new management service
+---
+title: Make your own integration services
+description: Windows 10 integration services.
+keywords: windows 10, hyper-v
+author: scooley
+ms.date: 05/02/2016
+ms.topic: article
+ms.prod: windows-10-hyperv
+ms.service: windows-10-hyperv
+ms.assetid: 1ef8f18c-3d76-4c06-87e4-11d8d4e31aea
+---
 
-Starting in Windows 10, Hyper-V allows registered socket connections between the Hyper-V guest and host without relying on a network connection.  Using Hyper-V sockets, services can run independently of the networking stack and all data stays on the same physical memory.
+# Make your own integration services
+
+Starting in Windows 10, anyone can make a service very similar to the in-box Hyper-V integration services using a new socket-based communication channel between the Hyper-V host and the virtual machines running on it.  Using these Hyper-V sockets, services can run independently of the networking stack and all data stays on the same physical memory.
 
 This document walks through creating a simple application built on Hyper-V sockets and how to get started using them.
 
 [PowerShell Direct](../user_guide/vmsession.md) is an example of an application (in this case an in-box Windows service) which uses Hyper-V sockets to communicate.
 
 **Supported Host OS**
-* Windows 10
-* Windows Server Technical Preview 3
+* Windows 10 build 14290 and beyond
+* Windows Server Technical Preview 4 and later
 * Future releases (Server 2016 +)
 
 **Supported Guest OS**
 * Windows 10
-* Windows Server Technical Preview 3
+* Windows Server Technical Preview 4 and later
 * Future releases (Server 2016 +)
+* Linux guests with Linux Integration Services (see [Supported Linux and FreeBSD virtual machines for Hyper-V on Windows](https://technet.microsoft.com/library/dn531030(ws.12).aspx))
 
 **Capabilities and Limitations**  
 * Supports kernel mode or user mode actions  
@@ -27,10 +40,25 @@ This document walks through creating a simple application built on Hyper-V socke
 Right now, Hyper-V sockets are available in native code (C/C++).  
 
 To write a simple application, you'll need:
-* C compiler.  If you don't have one, checkout [Visual Studio Code](https://aka.ms/vs)
-* A computer running Hyper-V with and a virtual machine.  
+* C compiler.  If you don't have one, checkout [Visual Studio Community](https://aka.ms/vs)
+* A computer running Hyper-V and a virtual machine.  
   * Host and guest (VM) OS must be Windows 10, Windows Server Technical Preview 3, or later.
-* Windows SDK -- here's a link to the [Win10 SDK](https://dev.windows.com/en-us/downloads/windows-10-sdk) which includes `hvsocket.h`.
+* [Windows 10 SDK](http://aka.ms/flightingSDK) installed on the Hyper-V host
+
+**Windows SDK Details**
+
+Links to the Windows SDK:
+* [Windows 10 SDK for insiders preview](http://aka.ms/flightingSDK)
+* [Windows 10 SDK](https://dev.windows.com/en-us/downloads/windows-10-sdk)
+
+The API for Hyper-V sockets became available in Windows 10 build 14290 -- the flighting download matches the latest insider fast track flighting build.  
+If you experience strange bahavior, let us know in the [TechNet forum](https://social.technet.microsoft.com/Forums/windowsserver/en-US/home "TechNet Forums").  In your post, please include:
+* The unexpected behavior 
+* The OS and build numbers for the host, guest, and SDK.  
+  
+  The SDK build number is visible in the title of the SDK installer:  
+  ![](./media/flightingSDK.png)
+
 
 ## Register a new application
 In order to use Hyper-V sockets, the application must be registered with the Hyper-V Host's registry.
@@ -46,7 +74,7 @@ $friendlyName = "HV Socket Demo"
 
 # Create a new random GUID and add it to the services list then add the name as a value
 
-$service = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name ([System.Guid]::NewGuid().ToString())
+$service = New-Item -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices" -Name ((New-Guid).Guid)
 
 $service.SetValue("ElementName", $friendlyName)
 
@@ -59,7 +87,7 @@ $service.PSChildName | clip.exe
 ``` 
 HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\GuestCommunicationServices\
 ```  
-In this registry location, you'll see several GUIDS.  Those are our in-box services.
+In this registry location, you'll see several GUIDs.  Those are our in-box services.
 
 Information in the registry per service:
 * `Service GUID`   
@@ -80,7 +108,7 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Virtualization\G
 
 > ** Tip: **  To generate a GUID in PowerShell and copy it to the clipboard, run:  
 ``` PowerShell
-[System.Guid]::NewGuid().ToString() | clip.exe
+(New-Guid).Guid | clip.exe
 ```
 
 ## Creating a Hyper-V socket
@@ -101,11 +129,11 @@ SOCKET WSAAPI socket(
 
 For a Hyper-V socket:
 * Address family - `AF_HYPERV`
-* type - `SOCK_STREAM`, `SOCK_DGRAM`, or `SOCK_RAW`
+* type - `SOCK_STREAM`
 * protocol - `HV_PROTOCOL_RAW`
 
 
-Here is an example declaration/instanciation:  
+Here is an example declaration/instantiation:  
 ``` C
 SOCKET sock = socket(AF_HYPERV, SOCK_STREAM, HV_PROTOCOL_RAW);
 ```
@@ -141,7 +169,7 @@ struct SOCKADDR_HV
 };
 ```
 
-In lieu of an IP or hostname, AF_HYPERV endpoints rely heavily on two GUIDS:  
+In lieu of an IP or hostname, AF_HYPERV endpoints rely heavily on two GUIDs:  
 * VM ID – this is the unique ID assigned per VM.  A VM’s ID can be found using the following PowerShell snippet.  
   ```PowerShell
   (Get-VM -Name $VMName).Id
@@ -172,12 +200,12 @@ Listening on this VmId accepts connection from:
 
 ## Supported socket commands
 
-Socket()
-Bind()
-Connect()
-Send()
-Listen()
-Accept()
+Socket()  
+Bind()  
+Connect()  
+Send()  
+Listen()  
+Accept()  
 
 [Complete WinSock API](https://msdn.microsoft.com/en-us/library/windows/desktop/ms741394.aspx)
 
